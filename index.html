@@ -120,6 +120,9 @@
       overflow-y: auto;
     }
     .message-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
       background: #f6f7fb;
       border-radius: 14px;
       padding: 9px 11px;
@@ -128,15 +131,51 @@
       line-height: 1.4;
       margin-bottom: 8px;
     }
+    .message-item-content {
+      flex: 1;
+      min-width: 0;
+    }
     .message-item-time {
       display: block;
       font-size: 0.75rem;
       color: #90a1c3;
       margin-top: 3px;
     }
+    .message-delete-btn {
+      flex-shrink: 0;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      color: #fff;
+      background: #c62828;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s, filter 0.2s;
+    }
+    .message-delete-btn:hover {
+      background: #e53935;
+      filter: brightness(1.15);
+    }
     .message-empty {
       font-size: 0.86rem;
       color: #9aa7c5;
+    }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.78);
+      border-radius: 8px;
+      z-index: 9999;
+      animation: toastIn 0.25s ease;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
   </style>
 </head>
@@ -189,6 +228,29 @@
       return `${y}-${m}-${d} ${hh}:${mm}`;
     }
 
+    function createMessageLi(msg) {
+      const li = document.createElement('li');
+      li.className = 'message-item';
+      if (msg.id) {
+        li.dataset.id = msg.id;
+        messageIds.add(msg.id);
+      }
+      const contentWrap = document.createElement('div');
+      contentWrap.className = 'message-item-content';
+      contentWrap.textContent = msg.content || '';
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'message-item-time';
+      timeSpan.textContent = formatTime(msg.created_at);
+      contentWrap.appendChild(timeSpan);
+      li.appendChild(contentWrap);
+      const delBtn = document.createElement('button');
+      delBtn.className = 'message-delete-btn';
+      delBtn.type = 'button';
+      delBtn.textContent = '删除';
+      li.appendChild(delBtn);
+      return li;
+    }
+
     function renderMessages(messages) {
       messageList.innerHTML = '';
       messageIds.clear();
@@ -201,20 +263,34 @@
       }
 
       messages.forEach(msg => {
-        if (msg.id) {
-          messageIds.add(msg.id);
-        }
-        const li = document.createElement('li');
-        li.className = 'message-item';
-        li.textContent = msg.content || '';
-
-        const timeSpan = document.createElement('span');
-        timeSpan.className = 'message-item-time';
-        timeSpan.textContent = formatTime(msg.created_at);
-        li.appendChild(timeSpan);
-
-        messageList.appendChild(li);
+        messageList.appendChild(createMessageLi(msg));
       });
+    }
+
+    function showToast(text) {
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.textContent = text;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2000);
+    }
+
+    async function deleteMessage(id) {
+      const { error } = await supabaseClient
+        .from('messages')
+        .delete()
+        .eq('id', id);
+      if (error) {
+        console.error('删除留言失败：', error.message);
+        alert('删除失败，请稍后再试。');
+        return;
+      }
+      const li = messageList.querySelector('[data-id="' + id + '"]');
+      if (li) {
+        li.remove();
+        messageIds.delete(id);
+      }
+      showToast('已删除');
     }
 
     async function loadMessages() {
@@ -267,6 +343,14 @@
       }
     });
 
+    messageList.addEventListener('click', function (event) {
+      const btn = event.target.closest('.message-delete-btn');
+      if (!btn) return;
+      const li = btn.closest('.message-item');
+      if (!li || !li.dataset.id) return;
+      deleteMessage(li.dataset.id);
+    });
+
     // 初始加载历史留言
     loadMessages();
 
@@ -294,15 +378,7 @@
             messageList.innerHTML = '';
           }
 
-          const li = document.createElement('li');
-          li.className = 'message-item';
-          li.textContent = newMsg.content || '';
-
-          const timeSpan = document.createElement('span');
-          timeSpan.className = 'message-item-time';
-          timeSpan.textContent = formatTime(newMsg.created_at);
-          li.appendChild(timeSpan);
-
+          const li = createMessageLi(newMsg);
           messageList.insertBefore(li, messageList.firstChild);
         }
       )
