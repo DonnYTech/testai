@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>欢迎页面</title>
+  <style>
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', 'Hiragino Sans GB', 'Microsoft Yahei', sans-serif;
+      background: linear-gradient(135deg, #0f2027 0%, #2c5364 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: 0 8px 32px 0 rgba( 52, 80, 158, 0.25 ), 0 1.5px 8px 0 rgba(52,120,199,0.12);
+      max-width: 400px;
+      padding: 44px 36px 38px 36px;
+      text-align: center;
+      position: relative;
+      animation: floatIn 1.15s cubic-bezier(.5,1.5,.6,1) 0s 1 normal;
+    }
+    @keyframes floatIn {
+      0% { transform: scale(0.88) translateY(64px); opacity: 0.2;}
+      70% { transform: scale(1.01) translateY(-12px); opacity: 1;}
+      100% { transform: scale(1) translateY(0);}
+    }
+    .main-title {
+      font-size: 2rem;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      color: #22345d;
+      margin-bottom: 18px;
+    }
+    .subtitle {
+      color: #5078b8;
+      font-size: 1.13rem;
+      margin-bottom: 32px;
+      font-weight: 500;
+    }
+    .glow-btn {
+      font-size: 1.02rem;
+      font-weight: 600;
+      padding: 0.88em 2.2em;
+      color: #fff;
+      background: linear-gradient(90deg, #265fde 50%, #52d6fb 100%);
+      border: none;
+      border-radius: 28px;
+      box-shadow: 0 0 18px #265fde, 0 0 32px #52d6fb3d;
+      cursor: pointer;
+      transition: background 0.3s, box-shadow 0.25s, transform 0.11s;
+      outline: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .glow-btn:hover, .glow-btn:focus {
+      background: linear-gradient(90deg, #52d6fb 20%, #265fde 100%);
+      box-shadow: 0 0 24px #52d6fbaa, 0 0 56px #265fde84;
+      transform: scale(1.035);
+    }
+    .message-section {
+      margin-top: 32px;
+      text-align: left;
+    }
+    .message-section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #22345d;
+      margin-bottom: 10px;
+    }
+    .message-input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .message-input {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid #d4dff5;
+      font-size: 0.94rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .message-input:focus {
+      border-color: #265fde;
+      box-shadow: 0 0 0 3px rgba(82, 214, 251, 0.3);
+    }
+    .message-save-btn {
+      padding: 0 16px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(90deg, #35c2ff 0%, #1f78ff 100%);
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 0 14px rgba(53, 194, 255, 0.55);
+      transition: transform 0.1s, box-shadow 0.2s, opacity 0.15s;
+    }
+    .message-save-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 18px rgba(53, 194, 255, 0.8);
+    }
+    .message-save-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .message-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .message-item {
+      background: #f6f7fb;
+      border-radius: 14px;
+      padding: 9px 11px;
+      font-size: 0.9rem;
+      color: #33415c;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    .message-item-time {
+      display: block;
+      font-size: 0.75rem;
+      color: #90a1c3;
+      margin-top: 3px;
+    }
+    .message-empty {
+      font-size: 0.86rem;
+      color: #9aa7c5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="main-title">你好，世界！</div>
+    <div class="subtitle">这是我的第一个全栈项目</div>
+    <button class="glow-btn" onclick="alert('恭喜你开启了编程之旅！')">
+      开始你的旅程
+    </button>
+    <div class="message-section">
+      <div class="message-section-title">留言板</div>
+      <div class="message-input-row">
+        <input
+          id="message-input"
+          class="message-input"
+          type="text"
+          placeholder="写点什么吧..."
+        >
+        <button id="save-message-btn" class="message-save-btn">
+          保存留言
+        </button>
+      </div>
+      <ul id="message-list" class="message-list">
+        <li class="message-item message-empty">还没有留言，快来写第一条吧～</li>
+      </ul>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // TODO: 将下面两个值替换成你在 Supabase 后台复制的 URL 和 anon key
+    const SUPABASE_URL = 'https://raeaomvkgjjficvvoetj.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_lL3N4oaS81J6mvL2PWy5kg_EIOVIeIE';
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const messageInput = document.getElementById('message-input');
+    const saveButton = document.getElementById('save-message-btn');
+    const messageList = document.getElementById('message-list');
+    const messageIds = new Set();
+
+    function formatTime(isoString) {
+      if (!isoString) return '';
+      const date = new Date(isoString);
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const hh = String(date.getHours()).padStart(2, '0');
+      const mm = String(date.getMinutes()).padStart(2, '0');
+      return `${y}-${m}-${d} ${hh}:${mm}`;
+    }
+
+    function renderMessages(messages) {
+      messageList.innerHTML = '';
+      messageIds.clear();
+      if (!messages || messages.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'message-item message-empty';
+        li.textContent = '还没有留言，快来写第一条吧～';
+        messageList.appendChild(li);
+        return;
+      }
+
+      messages.forEach(msg => {
+        if (msg.id) {
+          messageIds.add(msg.id);
+        }
+        const li = document.createElement('li');
+        li.className = 'message-item';
+        li.textContent = msg.content || '';
+
+        const timeSpan = document.createElement('span');
+        timeSpan.className = 'message-item-time';
+        timeSpan.textContent = formatTime(msg.created_at);
+        li.appendChild(timeSpan);
+
+        messageList.appendChild(li);
+      });
+    }
+
+    async function loadMessages() {
+      const { data, error } = await supabaseClient
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('加载留言失败：', error.message);
+        return;
+      }
+
+      renderMessages(data);
+    }
+
+    async function saveMessage() {
+      const content = (messageInput.value || '').trim();
+      if (!content) {
+        alert('请输入留言内容~');
+        return;
+      }
+
+      saveButton.disabled = true;
+
+      const { error } = await supabaseClient
+        .from('messages')
+        .insert({ content });
+
+      if (error) {
+        console.error('保存留言失败：', error.message);
+        alert('保存失败，请稍后再试。');
+      } else {
+        console.log('保存留言成功');
+        alert('留言已保存成功！');
+        messageInput.value = '';
+        // 重新加载一次最新留言列表，立刻看到刚刚的留言
+        loadMessages();
+      }
+
+      saveButton.disabled = false;
+    }
+
+    saveButton.addEventListener('click', saveMessage);
+    messageInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        saveMessage();
+      }
+    });
+
+    // 初始加载历史留言
+    loadMessages();
+
+    // 订阅实时插入的留言
+    const channel = supabaseClient
+      .channel('public:messages')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        payload => {
+          // 将新留言插入列表顶部
+          const newMsg = payload.new;
+
+          // 如果这条留言已经在列表中了（例如刚刚 loadMessages 刷新过），就不再重复插入
+          if (newMsg.id && messageIds.has(newMsg.id)) {
+            return;
+          }
+          if (newMsg.id) {
+            messageIds.add(newMsg.id);
+          }
+
+          // 如果当前还是“暂无留言”的提示，先清空
+          const first = messageList.firstElementChild;
+          if (first && first.classList.contains('message-empty')) {
+            messageList.innerHTML = '';
+          }
+
+          const li = document.createElement('li');
+          li.className = 'message-item';
+          li.textContent = newMsg.content || '';
+
+          const timeSpan = document.createElement('span');
+          timeSpan.className = 'message-item-time';
+          timeSpan.textContent = formatTime(newMsg.created_at);
+          li.appendChild(timeSpan);
+
+          messageList.insertBefore(li, messageList.firstChild);
+        }
+      )
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          console.log('已订阅 messages 表的实时更新');
+        }
+      });
+  </script>
+</body>
+</html>
