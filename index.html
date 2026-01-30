@@ -116,33 +116,35 @@
       list-style: none;
       padding-left: 0;
       margin: 0;
-      max-height: 260px;
+      max-height: 280px;
       overflow-y: auto;
     }
     .message-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      background: #f6f7fb;
-      border-radius: 14px;
-      padding: 9px 11px;
+      position: relative;
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      padding-right: 56px;
       font-size: 0.9rem;
       color: #33415c;
-      line-height: 1.4;
-      margin-bottom: 8px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+      text-align: left;
     }
     .message-item-content {
-      flex: 1;
       min-width: 0;
     }
     .message-item-time {
       display: block;
       font-size: 0.75rem;
       color: #90a1c3;
-      margin-top: 3px;
+      margin-top: 6px;
     }
     .message-delete-btn {
-      flex-shrink: 0;
+      position: absolute;
+      top: 10px;
+      right: 10px;
       padding: 4px 8px;
       font-size: 0.75rem;
       color: #fff;
@@ -159,6 +161,25 @@
     .message-empty {
       font-size: 0.86rem;
       color: #9aa7c5;
+      background: #f8f9fc;
+      box-shadow: none;
+    }
+    .message-list-loading {
+      list-style: none;
+      padding: 20px 0;
+      margin: 0;
+      text-align: center;
+      background: transparent;
+      box-shadow: none;
+    }
+    .message-list-loading-text {
+      font-size: 0.9rem;
+      color: #6b7a9e;
+      animation: loadingPulse 1.2s ease-in-out infinite;
+    }
+    @keyframes loadingPulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
     }
     .toast {
       position: fixed;
@@ -217,6 +238,7 @@
     const messageList = document.getElementById('message-list');
     const messageIds = new Set();
 
+    /** 将 Supabase created_at (ISO) 转为易读时间，如 2026-01-30 20:00 */
     function formatTime(isoString) {
       if (!isoString) return '';
       const date = new Date(isoString);
@@ -225,7 +247,7 @@
       const d = String(date.getDate()).padStart(2, '0');
       const hh = String(date.getHours()).padStart(2, '0');
       const mm = String(date.getMinutes()).padStart(2, '0');
-      return `${y}-${m}-${d} ${hh}:${mm}`;
+      return y + '-' + m + '-' + d + ' ' + hh + ':' + mm;
     }
 
     function createMessageLi(msg) {
@@ -293,7 +315,12 @@
       showToast('已删除');
     }
 
+    function showListLoading() {
+      messageList.innerHTML = '<li class="message-list-loading"><span class="message-list-loading-text">正在翻阅留言本...</span></li>';
+    }
+
     async function loadMessages() {
+      showListLoading();
       const { data, error } = await supabaseClient
         .from('messages')
         .select('*')
@@ -302,6 +329,7 @@
 
       if (error) {
         console.error('加载留言失败：', error.message);
+        messageList.innerHTML = '<li class="message-item message-empty">加载失败，请刷新重试</li>';
         return;
       }
 
