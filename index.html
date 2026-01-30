@@ -121,6 +121,9 @@
     }
     .message-item {
       position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
       background: #fff;
       border-radius: 12px;
       padding: 12px 14px;
@@ -131,6 +134,24 @@
       margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
       text-align: left;
+    }
+    .message-item-avatar {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e8ecf4;
+    }
+    .message-item-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .message-item-nickname {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #4a5f8f;
+      margin-bottom: 2px;
     }
     .message-item-content {
       min-width: 0;
@@ -203,7 +224,7 @@
 <body>
   <div class="card">
     <div class="main-title">你好，世界！</div>
-    <div class="subtitle">这是我的第一个全栈项目</div>
+    <div class="subtitle">这是我的第一个AI全栈项目</div>
     <button class="glow-btn" onclick="alert('恭喜你开启了编程之旅！')">
       开始你的旅程
     </button>
@@ -231,12 +252,33 @@
     const SUPABASE_URL = 'https://raeaomvkgjjficvvoetj.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_lL3N4oaS81J6mvL2PWy5kg_EIOVIeIE';
 
+    // 留言板需要 messages 表包含：id, content, created_at, nickname, avatar_url
+    // 若表里还没有 nickname、avatar_url，请在 Supabase → SQL Editor 执行下方说明文件中的 SQL
+
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const messageInput = document.getElementById('message-input');
     const saveButton = document.getElementById('save-message-btn');
     const messageList = document.getElementById('message-list');
     const messageIds = new Set();
+
+    /** 随机昵称池（发送留言时随机分配一个） */
+    const NICKNAMES = [
+      '可爱的火星人', '勇敢的小仓鼠', '快乐的小企鹅', '爱笑的向日葵', '爱做梦的星星',
+      '温柔的小鹿', '好奇的探险家', '爱读书的猫头鹰', '会唱歌的云朵', '爱跑步的兔子',
+      '安静的小蘑菇', '热情的小太阳', '爱画画的彩虹', '爱旅行的风', '爱睡觉的考拉',
+      '机灵的小狐狸', '憨厚的大熊猫', '爱跳舞的蝴蝶', '爱游泳的海豚', '爱思考的猫'
+    ];
+
+    /** 根据昵称生成 DiceBear 卡通头像 URL（免费 API，无需注册） */
+    function getDiceBearUrl(seed) {
+      const s = (seed || 'guest').toString().trim() || 'guest';
+      return 'https://api.dicebear.com/9.x/lorelei/svg?seed=' + encodeURIComponent(s);
+    }
+
+    function getRandomNickname() {
+      return NICKNAMES[Math.floor(Math.random() * NICKNAMES.length)];
+    }
 
     /** 将 Supabase created_at (ISO) 转为易读时间，如 2026-01-30 20:00 */
     function formatTime(isoString) {
@@ -257,6 +299,22 @@
         li.dataset.id = msg.id;
         messageIds.add(msg.id);
       }
+      const avatarUrl = msg.avatar_url || getDiceBearUrl(msg.nickname || msg.id || 'guest');
+      const nickname = msg.nickname || '神秘访客';
+
+      const img = document.createElement('img');
+      img.className = 'message-item-avatar';
+      img.src = avatarUrl;
+      img.alt = nickname;
+      img.loading = 'lazy';
+      li.appendChild(img);
+
+      const body = document.createElement('div');
+      body.className = 'message-item-body';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'message-item-nickname';
+      nameEl.textContent = nickname;
+      body.appendChild(nameEl);
       const contentWrap = document.createElement('div');
       contentWrap.className = 'message-item-content';
       contentWrap.textContent = msg.content || '';
@@ -264,7 +322,9 @@
       timeSpan.className = 'message-item-time';
       timeSpan.textContent = formatTime(msg.created_at);
       contentWrap.appendChild(timeSpan);
-      li.appendChild(contentWrap);
+      body.appendChild(contentWrap);
+      li.appendChild(body);
+
       const delBtn = document.createElement('button');
       delBtn.className = 'message-delete-btn';
       delBtn.type = 'button';
@@ -345,9 +405,12 @@
 
       saveButton.disabled = true;
 
+      const nickname = getRandomNickname();
+      const avatar_url = getDiceBearUrl(nickname);
+
       const { error } = await supabaseClient
         .from('messages')
-        .insert({ content });
+        .insert({ content, nickname, avatar_url });
 
       if (error) {
         console.error('保存留言失败：', error.message);
@@ -356,7 +419,6 @@
         console.log('保存留言成功');
         alert('留言已保存成功！');
         messageInput.value = '';
-        // 重新加载一次最新留言列表，立刻看到刚刚的留言
         loadMessages();
       }
 
